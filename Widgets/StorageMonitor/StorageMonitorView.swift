@@ -120,7 +120,7 @@ struct StorageMonitorView: View {
                 .stroke(ringColor.opacity(0.15), lineWidth: size * 0.22)
 
             Circle()
-                .trim(from: 0, to: usedFraction)
+                .trim(from: 0, to: 1 - usedFraction)
                 .stroke(ringColor, style: StrokeStyle(lineWidth: size * 0.22, lineCap: useRoundedCap ? .round : .butt))
                 .rotationEffect(.degrees(-90))
         }
