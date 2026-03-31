@@ -1,0 +1,41 @@
+name: Deploy Widgets
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'Widgets/**'
+      - 'scripts/**'
+
+jobs:
+  build-and-deploy:
+    runs-on: macos-14
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build all widgets
+        run: bash scripts/build-widgets.sh
+
+      - name: Generate manifest
+        run: python3 scripts/generate-manifest.py
+
+      - name: Prepare site
+        run: |
+          mkdir -p _site/bundles
+          cp manifest.json _site/
+          cp build/*.bundle.zip _site/bundles/
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

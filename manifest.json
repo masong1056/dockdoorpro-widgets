@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 2,
+  "widgets": [
+    {
+      "id": "storage-monitor",
+      "name": "Storage",
+      "author": "example",
+      "description": "Shows available disk space with a usage ring",
+      "iconSymbol": "internaldrive",
+      "bundleFilename": "StorageMonitor.bundle.zip"
+    }
+  ]
+}

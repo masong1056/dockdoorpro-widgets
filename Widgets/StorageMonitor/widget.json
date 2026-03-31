@@ -1,0 +1,9 @@
+{
+    "id": "storage-monitor",
+    "name": "Storage",
+    "author": "example",
+    "description": "Shows available disk space with a usage ring",
+    "iconSymbol": "internaldrive",
+    "principalClass": "StorageMonitorPlugin",
+    "sources": ["StorageMonitorPlugin.swift", "StorageMonitorView.swift"]
+}

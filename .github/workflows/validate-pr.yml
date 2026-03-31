@@ -1,0 +1,41 @@
+name: Validate PR
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build widgets
+        run: bash scripts/build-widgets.sh
+
+      - name: Validate widget folder names
+        run: |
+          for dir in Widgets/*/; do
+            name=$(basename "$dir")
+            if ! echo "$name" | grep -qE '^[A-Za-z0-9-]+$'; then
+              echo "::error::Widget folder '$name' contains invalid characters. Use only letters, numbers, and hyphens."
+              exit 1
+            fi
+          done
+          echo "Folder names valid"
+
+      - name: Lint for unsafe APIs
+        run: |
+          UNSAFE_PATTERNS="Process\(|NSTask|dlopen|dlsym|system\(|popen\("
+          FOUND=0
+          for dir in Widgets/*/; do
+            for f in "$dir"/*.swift; do
+              [ -f "$f" ] || continue
+              if grep -qE "$UNSAFE_PATTERNS" "$f"; then
+                echo "::error file=$f::Contains unsafe API usage"
+                FOUND=1
+              fi
+            done
+          done
+          if [ "$FOUND" -eq 1 ]; then exit 1; fi
+          echo "Lint passed"
