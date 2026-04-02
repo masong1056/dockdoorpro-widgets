@@ -8,15 +8,7 @@ struct StorageMonitorPanelView: View {
     @State private var volumes: [VolumeInfo] = []
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Image(systemName: "internaldrive")
-                    .font(.title3.weight(.semibold))
-                Text("Storage")
-                    .font(.title3.weight(.semibold))
-                Spacer()
-            }
-
+        VStack(alignment: .leading, spacing: 16) {
             if volumes.isEmpty {
                 Text("No volumes found")
                     .font(.caption)
@@ -28,47 +20,36 @@ struct StorageMonitorPanelView: View {
             }
         }
         .padding(16)
-        .frame(width: 280)
+        .frame(width: 260)
         .onAppear { refresh() }
     }
 
     private func volumeRow(_ volume: VolumeInfo) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .firstTextBaseline) {
                 Text(volume.name)
                     .font(.subheadline.weight(.medium))
                 Spacer()
                 Text(volume.freeLabel)
-                    .font(.caption.monospacedDigit())
+                    .font(.subheadline.monospacedDigit())
                     .foregroundStyle(.secondary)
             }
 
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 3, style: .continuous)
+                    Capsule()
                         .fill(volume.color.opacity(0.15))
 
-                    RoundedRectangle(cornerRadius: 3, style: .continuous)
+                    Capsule()
                         .fill(volume.color)
                         .frame(width: geo.size.width * volume.usedFraction)
                 }
             }
-            .frame(height: 6)
+            .frame(height: 4)
 
-            HStack {
-                Text("\(volume.usedLabel) used")
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
-                Spacer()
-                Text("\(volume.totalLabel) total")
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
-            }
-        }
-        .padding(10)
-        .background {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .fill(.quaternary.opacity(0.3))
+            Text("\(volume.usedLabel) of \(volume.totalLabel)")
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
         }
     }
 

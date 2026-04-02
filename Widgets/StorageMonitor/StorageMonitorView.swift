@@ -67,14 +67,15 @@ struct StorageMonitorView: View {
     // MARK: - Compact
 
     private var compactLayout: some View {
-        VStack(spacing: 1) {
-            usageRing(size: dim * WidgetMetrics.contentScale * 0.75)
+        ZStack {
+            usageRing(size: dim * WidgetMetrics.contentScale)
 
             Text(freeLabel)
-                .font(.caption.weight(.semibold).monospacedDigit())
-                .foregroundStyle(.secondary)
+                .font(.system(size: dim * 0.18, weight: .bold, design: .rounded).monospacedDigit())
+                .foregroundStyle(.primary)
                 .lineLimit(1)
-                .minimumScaleFactor(0.6)
+                .minimumScaleFactor(0.5)
+                .shadow(color: .black.opacity(0.5), radius: 2, y: 1)
         }
     }
 
