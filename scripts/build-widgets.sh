@@ -15,13 +15,16 @@ mkdir -p "$BUILD_DIR" "$SDK_OUT"
 
 # Step 1: Compile SDK into a .swiftmodule so widgets can import it
 echo "Building DockDoorWidgetSDK..."
-swiftc \
-    -target arm64-apple-macosx14.0 \
-    -module-name DockDoorWidgetSDK \
-    -emit-module \
-    -emit-module-path "$SDK_OUT/DockDoorWidgetSDK.swiftmodule" \
-    -parse-as-library \
-    "$SDK_DIR"/*.swift 2>&1
+for arch in arm64 x86_64; do
+    mkdir -p "$SDK_OUT/$arch"
+    swiftc \
+        -target ${arch}-apple-macosx14.0 \
+        -module-name DockDoorWidgetSDK \
+        -emit-module \
+        -emit-module-path "$SDK_OUT/$arch/DockDoorWidgetSDK.swiftmodule" \
+        -parse-as-library \
+        "$SDK_DIR"/*.swift 2>&1
+done
 echo "SDK built successfully."
 echo ""
 
@@ -87,16 +90,23 @@ for WIDGET_DIR in "${WIDGET_DIRS[@]}"; do
     rm -rf "$BUNDLE_DIR"
     mkdir -p "$BUNDLE_MACOS"
 
-    # Compile without linking SDK; host app provides symbols at runtime
+    # Compile for each architecture, then merge into a universal binary
     echo "  Compiling..."
-    swiftc \
-        -target arm64-apple-macosx14.0 \
-        -emit-library \
-        -o "$BUNDLE_MACOS/$WIDGET_NAME" \
-        -module-name "$WIDGET_NAME" \
-        -I "$SDK_OUT" \
-        -Xlinker -undefined -Xlinker dynamic_lookup \
-        "${SOURCE_FILES[@]}" 2>&1
+    for arch in arm64 x86_64; do
+        swiftc \
+            -target ${arch}-apple-macosx14.0 \
+            -emit-library \
+            -o "$BUNDLE_MACOS/${WIDGET_NAME}_${arch}" \
+            -module-name "$WIDGET_NAME" \
+            -I "$SDK_OUT/$arch" \
+            -Xlinker -undefined -Xlinker dynamic_lookup \
+            "${SOURCE_FILES[@]}" 2>&1
+    done
+    lipo -create \
+        "$BUNDLE_MACOS/${WIDGET_NAME}_arm64" \
+        "$BUNDLE_MACOS/${WIDGET_NAME}_x86_64" \
+        -output "$BUNDLE_MACOS/$WIDGET_NAME"
+    rm "$BUNDLE_MACOS/${WIDGET_NAME}_arm64" "$BUNDLE_MACOS/${WIDGET_NAME}_x86_64"
 
     cat > "$BUNDLE_DIR/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
