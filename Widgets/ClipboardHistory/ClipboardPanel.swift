@@ -42,23 +42,23 @@ private func donneesPNG(depuis image: NSImage) -> Data? {
 
 enum FiltrePressePapier: String, CaseIterable {
     case tout    = "tout"
-    case images  = "images"
-    case liens   = "liens"
+    case medias  = "medias"
+    case donnees = "donnees"
 
     /// Étiquette traduite selon la langue active.
     var etiquette: String {
         switch self {
-        case .tout:   return L.tout
-        case .images: return L.images
-        case .liens:  return L.liens
+        case .tout:    return L.tout
+        case .medias:  return L.medias
+        case .donnees: return L.donnees
         }
     }
 
     var icone: String {
         switch self {
-        case .tout:   return "square.grid.2x2"
-        case .images: return "photo"
-        case .liens:  return "link"
+        case .tout:    return "square.grid.2x2"
+        case .medias:  return "photo"
+        case .donnees: return "info.circle"
         }
     }
 }
@@ -1059,12 +1059,8 @@ struct LigneElementPressePapier: View {
                         Text(url.pathExtension.uppercased())
                     } else if case .texte = element.contenu, element.couleurCachee != nil {
                         Text(L.couleur)
-                    } else if case .texte(let t) = element.contenu, t.hasPrefix("http") || t.hasPrefix("www") {
-                        Text(L.lien)
-                    } else if case .texte = element.contenu {
-                        Text(L.texte)
                     } else {
-                        Text(element.source + "  " + DateFormatter.heureSeule.string(from: element.date))
+                        Text(element.labelType)
                     }
                 }
                 .font(.system(size: 10))
@@ -1386,9 +1382,15 @@ private struct BoutonSegment: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 2) {
-                Image(systemName: filtre.icone).font(.system(size: 10, weight: .medium))
-                Text(filtre.etiquette).font(.system(size: 11, weight: .medium)).lineLimit(1).fixedSize()
+            HStack(spacing: 3) {
+                Image(systemName: filtre.icone)
+                    .font(.system(size: 10, weight: .medium))
+                if estActif {
+                    Text(filtre.etiquette)
+                        .font(.system(size: 10, weight: .medium))
+                        .lineLimit(1)
+                        .transition(.opacity.combined(with: .scale(scale: 0.85, anchor: .leading)))
+                }
             }
             .foregroundStyle(estActif ? .primary : (estSurvole ? .primary : .secondary))
             .frame(width: largeur, height: hauteur)
@@ -1401,6 +1403,7 @@ private struct BoutonSegment: View {
         }
         .buttonStyle(.plain)
         .onHover { estSurvole = $0 }
+        .animation(.spring(response: 0.3, dampingFraction: 0.78), value: estActif)
     }
 }
 
@@ -1988,13 +1991,26 @@ struct PanneauPressePapier: View {
     private var elementsFiltres: [ElementPressePapier] {
         switch filtreActif {
         case .tout:    return moniteur.elements
-        case .images:  return moniteur.elements.filter {
+        case .medias:  return moniteur.elements.filter {
+            // Images bitmap copiées
             if case .image = $0.contenu { return true }
-            if case .urlFichier(let url) = $0.contenu { return ApercuFichier.extensionsImage.contains(url.pathExtension.lowercased()) }
+            // Fichiers image / vidéo / document
+            if case .urlFichier(let url) = $0.contenu {
+                let ext = url.pathExtension.lowercased()
+                let extensionsMedia: Set<String> = [
+                    "jpg","jpeg","png","gif","webp","svg","tiff","tif","bmp","heic","heif",
+                    "mp4","mov","avi","mkv","m4v","wmv","webm",
+                    "pdf","docx","doc","xlsx","xls","pptx","ppt","pages","numbers","key","odt"
+                ]
+                return extensionsMedia.contains(ext)
+            }
             return false
         }
-        case .liens:   return moniteur.elements.filter {
-            if case .texte(let t) = $0.contenu { return t.hasPrefix("http") || t.hasPrefix("www") }
+        case .donnees: return moniteur.elements.filter {
+            if case .texte = $0.contenu {
+                let st = $0.sousTypeCache
+                return st == .email || st == .telephone || st == .date || st == .url
+            }
             return false
         }
         }
@@ -2016,7 +2032,7 @@ struct PanneauPressePapier: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
 
             VStack(spacing: 0) {
-                HStack(spacing: 8) {
+                HStack(spacing: 6) {
                     ControleFiltreSegmente(filtres: FiltrePressePapier.allCases, filtreActif: $filtreActif)
                     if let binding = epingleBinding {
                         BoutonEpinglagePanneau(estEpingle: binding)

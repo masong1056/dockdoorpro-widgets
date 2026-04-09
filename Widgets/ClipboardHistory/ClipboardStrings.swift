@@ -19,9 +19,9 @@ func S(_ fr: String, _ en: String) -> String {
 
 enum L {
     // Filtres
-    static var tout:    String { S("Tout",   "All") }
-    static var images:  String { S("Images", "Images") }
-    static var liens:   String { S("Liens",  "Links") }
+    static var tout:    String { S("Tout",     "All") }
+    static var medias:  String { S("Médias",   "Media") }
+    static var donnees: String { S("Données",  "Data") }
 
     // Sections
     static var epingles: String { S("Épinglés", "Pinned") }
@@ -44,11 +44,17 @@ enum L {
     // Aperçu vide
     static var selectionnerElement: String { S("Sélectionnez un élément", "Select an item") }
     static func videFiltre(filtre: String = "") -> String {
-        if langueWidget() == "en" { return "None" }
+        if langueWidget() == "en" {
+            switch filtre {
+            case "Media":   return "No media"
+            case "Data":    return "None"
+            default:        return "None"
+            }
+        }
         switch filtre {
-        case "Images": return "Aucune image"
-        case "Liens":  return "Aucun lien"
-        default:       return "Aucun"
+        case "Médias":  return "Aucun média"
+        case "Données": return "Aucune"
+        default:        return "Aucun"
         }
     }
 

@@ -8,6 +8,41 @@ enum ContenuPressePapier {
     case inconnu
 }
 
+/// Sous-catégorie détectée pour les éléments texte.
+/// Tous ont la couleur bleue, seuls l'icône et le label changent.
+enum SousTypeTexte {
+    case email
+    case telephone
+    case date
+    case code
+    case url
+    case texte   // fallback générique
+}
+
+extension SousTypeTexte {
+    var icone: String {
+        switch self {
+        case .email:     return "envelope"
+        case .telephone: return "phone"
+        case .date:      return "calendar"
+        case .code:      return "chevron.left.forwardslash.chevron.right"
+        case .url:       return "globe.americas.fill"
+        case .texte:     return "doc.plaintext"
+        }
+    }
+
+    var label: String {
+        switch self {
+        case .email:     return "Email"
+        case .telephone: return "Phone"
+        case .date:      return "Date"
+        case .code:      return "Code"
+        case .url:       return "Link"
+        case .texte:     return "Text"
+        }
+    }
+}
+
 struct ElementPressePapier: Identifiable {
     let id = UUID()
     let contenu: ContenuPressePapier
@@ -15,9 +50,11 @@ struct ElementPressePapier: Identifiable {
     let date: Date
     var estEpingle: Bool = false
 
-    // OPTIMISATION 9 : résultat de détection de couleur mis en cache à la création
+    // OPTIMISATION 9 : résultats de détection mis en cache à la création
     // évite de relancer les regex à chaque re-render de la vue
     let couleurCachee: Color?
+    /// Sous-type détecté pour les éléments texte (email, téléphone, date, code, url, texte)
+    let sousTypeCache: SousTypeTexte?
 
     init(contenu: ContenuPressePapier, source: String, date: Date, estEpingle: Bool = false) {
         self.contenu     = contenu
@@ -27,8 +64,10 @@ struct ElementPressePapier: Identifiable {
         // Calcul unique au moment de la création de l'élément
         if case .texte(let t) = contenu {
             self.couleurCachee = ElementPressePapier.detecterCouleurStatique(dans: t)
+            self.sousTypeCache = ElementPressePapier.detecterSousType(dans: t)
         } else {
             self.couleurCachee = nil
+            self.sousTypeCache = nil
         }
     }
 
@@ -71,6 +110,44 @@ struct ElementPressePapier: Identifiable {
         return nil
     }
 
+    // MARK: - Détection du sous-type texte (email, téléphone, date, code, url)
+
+    // Regex compilées une seule fois pour la détection de sous-type
+    private static let regexEmail     = try! NSRegularExpression(pattern: "^[A-Z0-9a-z._%+\\-]+@[A-Za-z0-9.\\-]+\\.[A-Za-z]{2,}$")
+    private static let regexURL       = try! NSRegularExpression(pattern: "^https?://\\S+|^www\\.\\S+", options: .caseInsensitive)
+    // Téléphone : international (+33, +1, +44…) et formats français/génériques
+    private static let regexPhone     = try! NSRegularExpression(
+        pattern: #"^\+?(?:(?:\d[\s.\-]?){6,14}\d)$|^(?:0[1-9])(?:[\s.\-]?\d{2}){4}$|^0[1-9]\d{8}$"#
+    )
+    // Date : formats courants dd/mm/yyyy, yyyy-mm-dd, "March 12 2025", "12 mars 2025", etc.
+    private static let regexDate      = try! NSRegularExpression(
+        pattern: #"^\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}$|^\d{4}[\/\-\.]\d{1,2}[\/\-\.]\d{1,2}$|^(?:\d{1,2}\s)?(?:jan(?:uary|vier)?|feb(?:ruary|rier)?|mar(?:ch|s)?|apr(?:il|il)?|may|mai|jun(?:e|)?|jul(?:y|let)?|aug(?:ust|)?|ao[uû]t|sep(?:tember|tembre)?|oct(?:ober|obre)?|nov(?:ember|embre)?|dec(?:ember|embre)?)\s*\d{1,2}?,?\s*\d{2,4}$"#,
+        options: .caseInsensitive
+    )
+    // Code : présence de mots-clés ou structures typiques de code
+    private static let regexCode      = try! NSRegularExpression(
+        pattern: #"(?:func |let |var |const |class |struct |enum |import |return |if |else|switch |case |for |while |def |async |await|\{|\}|=>|->|\(\)|<\/?\w+>|;\s*$)"#,
+        options: .caseInsensitive
+    )
+
+    static func detecterSousType(dans texte: String) -> SousTypeTexte {
+        let t     = texte.trimmingCharacters(in: .whitespacesAndNewlines)
+        let range = NSRange(t.startIndex..., in: t)
+
+        // URL en premier (avant email pour éviter faux positifs)
+        if regexURL.firstMatch(in: t, range: range) != nil { return .url }
+        // Email
+        if regexEmail.firstMatch(in: t, range: range) != nil { return .email }
+        // Téléphone
+        if regexPhone.firstMatch(in: t, range: range) != nil { return .telephone }
+        // Date
+        if regexDate.firstMatch(in: t, range: range) != nil { return .date }
+        // Code (seulement si le texte contient plusieurs mots ou lignes)
+        if t.count > 3 && regexCode.firstMatch(in: t, range: range) != nil { return .code }
+
+        return .texte
+    }
+
     var titreAffiche: String {
         switch contenu {
         case .texte(let s):
@@ -84,10 +161,21 @@ struct ElementPressePapier: Identifiable {
 
     var iconeType: String {
         switch contenu {
-        case .texte:     return "doc.plaintext"
+        case .texte:
+            return sousTypeCache?.icone ?? "doc.plaintext"
         case .image:     return "photo"
         case .urlFichier: return "doc"
         case .inconnu:   return "questionmark"
+        }
+    }
+
+    var labelType: String {
+        switch contenu {
+        case .texte:
+            return sousTypeCache?.label ?? "Text"
+        case .image:     return "Image"
+        case .urlFichier(let url): return url.pathExtension.isEmpty ? "File" : url.pathExtension.uppercased()
+        case .inconnu:   return "Unknown"
         }
     }
 
