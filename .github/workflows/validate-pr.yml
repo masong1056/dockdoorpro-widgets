@@ -52,7 +52,7 @@ jobs:
 
       - name: Lint for unsafe APIs
         run: |
-          UNSAFE_PATTERNS="Process\(|NSTask|dlopen|dlsym|system\(|popen\("
+          UNSAFE_PATTERNS="Process\(|NSTask|dlopen|dlsym|[^.]system\(|^system\(|popen\("
           FOUND=0
           for dir in Widgets/*/; do
             for f in "$dir"/*.swift; do

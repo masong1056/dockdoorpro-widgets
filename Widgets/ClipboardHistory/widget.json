@@ -1,0 +1,10 @@
+{
+    "id": "clipboard-history",
+    "name": "Clipboard",
+    "author": "Harut12345",
+    "description": "Quick access to clipboard history with preview",
+    "iconSymbol": "list.bullet.clipboard",
+    "orientations": ["horizontal", "vertical"],
+    "principalClass": "ClipboardPlugin",
+    "sources": ["ClipboardPlugin.swift", "ClipboardManager.swift", "ClipboardPanel.swift", "ClipboardWidgetView.swift"]
+}
