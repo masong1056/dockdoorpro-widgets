@@ -1,10 +1,10 @@
 {
     "id": "clipboard-history",
     "name": "Clipboard",
-    "author": "Harut and Claude AI",
-    "description": "Quick access to clipboard history with live preview. Pin, copy, paste, multi-paste and color picker.",
-    "iconSymbol": "clipboard.fill",
+    "author": "Harut12345",
+    "description": "Quick access to clipboard history with preview",
+    "iconSymbol": "list.bullet.clipboard",
     "orientations": ["horizontal", "vertical"],
     "principalClass": "ClipboardPlugin",
-    "sources": ["ClipboardPlugin.swift", "ClipboardMonitor.swift", "ClipboardPanel.swift", "ClipboardWidgetView.swift", "ClipboardStrings.swift"]
+    "sources": ["ClipboardPlugin.swift", "ClipboardManager.swift", "ClipboardPanel.swift", "ClipboardWidgetView.swift"]
 }
