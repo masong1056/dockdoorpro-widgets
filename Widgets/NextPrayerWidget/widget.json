@@ -1,0 +1,17 @@
+{
+    "id": "next-prayer",
+    "name": "Next Prayer",
+    "author": "omarashraf",
+    "description": "Countdown to the next Islamic prayer with a luxurious glass UI, Hijri date, and all five daily prayers on hover.",
+    "iconSymbol": "moon.stars.fill",
+    "orientations": ["horizontal", "vertical"],
+    "principalClass": "NextPrayerPlugin",
+    "sources": [
+        "NextPrayerPlugin.swift",
+        "PrayerTimesService.swift",
+        "NextPrayerView.swift",
+        "NextPrayerPanel.swift",
+        "NextPrayerTheme.swift",
+        "AthkarData.swift"
+    ]
+}
